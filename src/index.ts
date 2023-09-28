@@ -1,28 +1,55 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import * as events from 'events';
 
-function generateRandomNumber(min: number = -1000, max: number = 1000) {
+function getRandInt(min: number = -1000, max: number = 1000) {
   return min + Math.floor(Math.random() * (max - min)) + 1;
 }
 
-function generateFile() {
-  const GENERATED_FILENAME = 'generated_file.txt';
+async function generateFile(byteSize: number = 1024 * 1024) {
+  const GENERATED_FILENAME = `generated_file_${
+    Math.round((byteSize / (1024 * 1024)) * 1000) / 1000
+  }.txt`;
   const SEPARATOR = ' ';
-  const NUMBER_OF_LINES = 1000;
+  // const NUMBER_OF_LINES = 1000;
   const NUMBERS_IN_LINE = 10;
 
   const writer = fs.createWriteStream(
     path.join(path.resolve(), 'data', GENERATED_FILENAME)
   );
 
-  for (let i = 0; i < NUMBER_OF_LINES; i += 1) {
+  let bytesWritten = 0;
+
+  do {
     const data = [...Array(NUMBERS_IN_LINE)].map(() => {
-      return generateRandomNumber();
+      return getRandInt();
     });
-    writer.write(data.join(SEPARATOR) + '\n');
-  }
+    let stringToWrite = data.join(SEPARATOR) + '\n';
+
+    const bytes = Buffer.byteLength(stringToWrite, 'utf-8');
+    if (bytes > byteSize - bytesWritten) {
+      stringToWrite = Buffer.from(stringToWrite, 'utf-8')
+        .subarray(0, byteSize - bytesWritten)
+        .toString('utf-8');
+      bytesWritten = byteSize;
+    } else {
+      bytesWritten += bytes;
+    }
+    const canWrite = writer.write(stringToWrite);
+
+    if (!canWrite) {
+      console.log('Full');
+      await new Promise<void>((resolve) => {
+        writer.once('drain', () => {
+          console.log('Drain');
+          resolve();
+        });
+      });
+      console.log(`Out, bytesWritten: ${bytesWritten}`);
+    }
+  } while (bytesWritten < byteSize);
 
   writer.end();
 }
 
-generateFile();
+// generateFile(1024 * 1024 * 1000 * 16);
