@@ -17,13 +17,11 @@ program.parse(process.argv);
 const { file: filePath } = program.opts();
 
 (async () => {
-  try {
-    await validateFilePath(program, filePath);
+  await validateFilePath(program, filePath);
 
-    // await naturalMerge(filePath);
-    const sorter = new NaturalMergeSort(filePath);
-    await sorter.sort();
-  } catch (e) {}
+  // await naturalMerge(filePath);
+  const sorter = new NaturalMergeSort(filePath);
+  await sorter.sort();
 })();
 
 // generateFile(1024 * 1024 * 500);
