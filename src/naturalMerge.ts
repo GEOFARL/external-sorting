@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { v4 as uuid } from 'uuid';
 import readline from 'node:readline/promises';
 
 interface IRunBuilder {
@@ -9,20 +10,48 @@ interface IRunBuilder {
   clearRun(): void;
 }
 
-interface IFileHandler {
+interface IFileWriter {
   moveToNextFile(): void;
   writeLine(data: string): void;
   closeAllFiles(): void;
+  getFilePaths(): string[];
 }
 
 interface INaturalMergeSort {
   sort(filePath: string): Promise<void>;
 }
 
-class FileHandler implements IFileHandler {
+class FileReader {
+  private lineReaders: {
+    [key: string]: readline.Interface;
+  } = {};
+
+  public addReader(filePath: string) {
+    const src = fs.createReadStream(filePath, 'utf-8');
+    const rl = readline.createInterface({
+      input: src,
+      crlfDelay: Infinity,
+    });
+    const id = uuid();
+    this.lineReaders[id] = rl;
+    return id;
+  }
+
+  public getReader(id: string) {
+    return this.lineReaders[id];
+  }
+
+  public removeReader(id: string) {
+    this.lineReaders[id].close();
+    delete this.lineReaders[id];
+  }
+}
+
+class FileWriter implements IFileWriter {
   private currentFile = 0;
   private files: fs.WriteStream[] = [];
   private tempDir: string = 'temp';
+  private filePaths: string[] = [];
 
   constructor() {
     this.createDirectory();
@@ -45,6 +74,7 @@ class FileHandler implements IFileHandler {
         this.tempDir,
         fileName
       );
+      this.filePaths.push(filePath);
       this.files.push(fs.createWriteStream(filePath, 'utf-8'));
     }
   }
@@ -61,6 +91,10 @@ class FileHandler implements IFileHandler {
     for (const file of this.files) {
       file.end();
     }
+  }
+
+  public getFilePaths(): string[] {
+    return this.filePaths;
   }
 }
 
@@ -85,25 +119,24 @@ class RunBuilder implements IRunBuilder {
 }
 
 export default class NaturalMergeSort implements INaturalMergeSort {
-  private fileHandler: FileHandler;
+  private fileWriter: FileWriter;
+  private fileReader: FileReader;
   private runBuilder: RunBuilder;
   private readonly SEPARATOR = ' ';
 
   constructor(private filePath: string) {
-    this.fileHandler = new FileHandler();
+    this.fileWriter = new FileWriter();
+    this.fileReader = new FileReader();
     this.runBuilder = new RunBuilder();
   }
 
   public async sort() {
-    const src = fs.createReadStream(this.filePath, 'utf-8');
-    const rl = readline.createInterface({
-      input: src,
-      crlfDelay: Infinity,
-    });
+    const src = this.fileReader.addReader(this.filePath);
+    const srcReader = this.fileReader.getReader(src);
 
     let prevNumber: number | undefined;
 
-    for await (const line of rl) {
+    for await (const line of srcReader) {
       const numbers = line.split(this.SEPARATOR).map((n) => +n);
       for (const number of numbers) {
         if (prevNumber !== undefined && number < prevNumber) {
@@ -115,15 +148,26 @@ export default class NaturalMergeSort implements INaturalMergeSort {
     }
 
     this.writeRunToFile();
-    this.fileHandler.closeAllFiles();
+    this.fileWriter.closeAllFiles();
+    this.fileReader.removeReader(src);
+
+    const outputFilePaths = this.fileWriter.getFilePaths();
+    const fileReaderIds: string[] = [];
+    outputFilePaths.forEach((path) => {
+      fileReaderIds.push(this.fileReader.addReader(path));
+    });
+
+    const fileReaders = fileReaderIds.map((id) =>
+      this.fileReader.getReader(id)
+    );
   }
 
   private writeRunToFile() {
     const run = this.runBuilder.getRun();
     if (!this.runBuilder.isRunEmpty()) {
-      this.fileHandler.writeLine(run.join(this.SEPARATOR) + '\n');
+      this.fileWriter.writeLine(run.join(this.SEPARATOR) + '\n');
       this.runBuilder.clearRun();
-      this.fileHandler.moveToNextFile();
+      this.fileWriter.moveToNextFile();
     }
   }
 }
