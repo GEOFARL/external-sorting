@@ -1,6 +1,7 @@
 import generateFile from './fileGeneration';
 import { Command } from 'commander';
 import { validateFilePath } from './fileValidation';
+import naturalMerge from './naturalMerge';
 
 const program = new Command();
 
@@ -18,6 +19,8 @@ const { file: filePath } = program.opts();
 (async () => {
   try {
     await validateFilePath(program, filePath);
+
+    await naturalMerge(filePath);
   } catch (e) {}
 })();
 
