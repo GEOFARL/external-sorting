@@ -2,58 +2,128 @@ import * as fs from 'fs';
 import * as path from 'path';
 import readline from 'node:readline/promises';
 
-interface Run {
-  numbers: number[];
+interface IRunBuilder {
+  addToRun(number: number): void;
+  isRunEmpty(): boolean;
+  getRun(): number[];
+  clearRun(): void;
 }
 
-async function naturalMerge(filePath: string) {
-  const DIR_NAME_TEMP = 'temp';
-  const src = fs.createReadStream(filePath, 'utf-8');
+interface IFileHandler {
+  moveToNextFile(): void;
+  writeLine(data: string): void;
+  closeAllFiles(): void;
+}
 
-  if (!fs.existsSync(path.join(path.resolve(), 'data', DIR_NAME_TEMP))) {
-    fs.mkdirSync(path.join(path.resolve(), 'data', DIR_NAME_TEMP));
+interface INaturalMergeSort {
+  sort(filePath: string): Promise<void>;
+}
+
+class FileHandler implements IFileHandler {
+  private currentFile = 0;
+  private files: fs.WriteStream[] = [];
+  private tempDir: string = 'temp';
+
+  constructor() {
+    this.createDirectory();
+    this.createFiles();
   }
 
-  const f1 = fs.createWriteStream(
-    path.join(path.resolve(), 'data', DIR_NAME_TEMP, 'file1.txt')
-  );
-  const f2 = fs.createWriteStream(
-    path.join(path.resolve(), 'data', DIR_NAME_TEMP, 'file2.txt')
-  );
-
-  const files = [f1, f2];
-
-  let currentFile = 0;
-  const nextFile = () => {
-    currentFile = (currentFile + 1) % 2;
-    return currentFile;
-  };
-
-  const SEPARATOR = ' ';
-
-  const rl = readline.createInterface({
-    input: src,
-    crlfDelay: Infinity,
-  });
-
-  const buffer = [];
-  const run: Run = {
-    numbers: [],
-  };
-
-  for await (const line of rl) {
-    const numbers = line.split(SEPARATOR).map((n) => +n);
-    for (const number of numbers) {
-      if (number < run.numbers[run.numbers.length - 1]) {
-        files[currentFile].write(run.numbers.join(SEPARATOR) + '\n', 'utf-8');
-        nextFile();
-        run.numbers = [];
-      }
-
-      run.numbers.push(number);
+  private createDirectory() {
+    const directoryPath = path.join(path.resolve(), 'data', this.tempDir);
+    if (!fs.existsSync(directoryPath)) {
+      fs.mkdirSync(directoryPath);
     }
-    files[currentFile].write(run.numbers.join(SEPARATOR) + '\n', 'utf-8');
+  }
+
+  private createFiles() {
+    for (let i = 1; i <= 2; i += 1) {
+      const fileName = `file${i}.txt`;
+      const filePath = path.join(
+        path.resolve(),
+        'data',
+        this.tempDir,
+        fileName
+      );
+      this.files.push(fs.createWriteStream(filePath, 'utf-8'));
+    }
+  }
+
+  public moveToNextFile() {
+    this.currentFile = (this.currentFile + 1) % 2;
+  }
+
+  public writeLine(data: string) {
+    this.files[this.currentFile].write(data, 'utf-8');
+  }
+
+  public closeAllFiles() {
+    for (const file of this.files) {
+      file.end();
+    }
   }
 }
 
-export default naturalMerge;
+class RunBuilder implements IRunBuilder {
+  private currentRun: number[] = [];
+
+  public addToRun(number: number) {
+    this.currentRun.push(number);
+  }
+
+  public isRunEmpty() {
+    return this.currentRun.length === 0;
+  }
+
+  public getRun() {
+    return this.currentRun.slice();
+  }
+
+  public clearRun() {
+    this.currentRun = [];
+  }
+}
+
+export default class NaturalMergeSort implements INaturalMergeSort {
+  private fileHandler: FileHandler;
+  private runBuilder: RunBuilder;
+  private readonly SEPARATOR = ' ';
+
+  constructor(private filePath: string) {
+    this.fileHandler = new FileHandler();
+    this.runBuilder = new RunBuilder();
+  }
+
+  public async sort() {
+    const src = fs.createReadStream(this.filePath, 'utf-8');
+    const rl = readline.createInterface({
+      input: src,
+      crlfDelay: Infinity,
+    });
+
+    let prevNumber: number | undefined;
+
+    for await (const line of rl) {
+      const numbers = line.split(this.SEPARATOR).map((n) => +n);
+      for (const number of numbers) {
+        if (prevNumber !== undefined && number < prevNumber) {
+          this.writeRunToFile();
+        }
+        this.runBuilder.addToRun(number);
+        prevNumber = number;
+      }
+    }
+
+    this.writeRunToFile();
+    this.fileHandler.closeAllFiles();
+  }
+
+  private writeRunToFile() {
+    const run = this.runBuilder.getRun();
+    if (!this.runBuilder.isRunEmpty()) {
+      this.fileHandler.writeLine(run.join(this.SEPARATOR) + '\n');
+      this.runBuilder.clearRun();
+      this.fileHandler.moveToNextFile();
+    }
+  }
+}

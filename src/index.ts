@@ -1,7 +1,7 @@
 import generateFile from './fileGeneration';
 import { Command } from 'commander';
 import { validateFilePath } from './fileValidation';
-import naturalMerge from './naturalMerge';
+import NaturalMergeSort from './naturalMerge';
 
 const program = new Command();
 
@@ -20,8 +20,10 @@ const { file: filePath } = program.opts();
   try {
     await validateFilePath(program, filePath);
 
-    await naturalMerge(filePath);
+    // await naturalMerge(filePath);
+    const sorter = new NaturalMergeSort(filePath);
+    await sorter.sort();
   } catch (e) {}
 })();
 
-// generateFile(10000);
+// generateFile(1024 * 1024 * 500);
