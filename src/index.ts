@@ -1,5 +1,6 @@
 import generateFile from './fileGeneration';
 import { Command } from 'commander';
+import { validateFilePath } from './fileValidation';
 
 const program = new Command();
 
@@ -11,5 +12,13 @@ program
 program.requiredOption('-f, --file <filePath>');
 
 program.parse(process.argv);
+
+const { file: filePath } = program.opts();
+
+(async () => {
+  try {
+    await validateFilePath(program, filePath);
+  } catch (e) {}
+})();
 
 // generateFile(100);
