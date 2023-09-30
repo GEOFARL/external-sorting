@@ -24,4 +24,4 @@ const { file: filePath } = program.opts();
   } catch (e) {}
 })();
 
-// generateFile(100);
+// generateFile(10000);
