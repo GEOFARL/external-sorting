@@ -3,6 +3,7 @@ import { Command } from 'commander';
 import { validateFilePath } from './fileValidation';
 import NaturalMergeSort from './naturalMerge';
 import readInChunks from './readInChunks';
+import writeNumbers from './writeNumbers';
 
 const program = new Command();
 
@@ -22,11 +23,12 @@ const { file: filePath } = program.opts();
 
   // const sorter = new NaturalMergeSort(filePath);
   // await sorter.sort();
-  const start = performance.now();
-  await readInChunks(filePath);
-  const end = performance.now();
-  const elapsed = end - start;
-  console.log(`Elapsed time: ${elapsed}`);
+  // const start = performance.now();
+  // await readInChunks(filePath);
+  // const end = performance.now();
+  // const elapsed = end - start;
+  // console.log(`Elapsed time: ${elapsed}`);
+  await writeNumbers();
 })();
 
 // generateFile(1024 * 1024 * 500);
