@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import { IReader } from './types';
 
 export default class Reader implements IReader {
-  private readonly CHUNK_SIZE = 25;
+  private readonly CHUNK_SIZE: number;
   private eof: boolean = false;
   private fd: number;
   private fileSize: number;
@@ -10,11 +10,13 @@ export default class Reader implements IReader {
   private sharedBuffer: Buffer;
   private leftOvers: string = '';
   private mergeEnds: boolean = false;
-  public lineCount: number = 1;
+  public lineCount: number = 0;
 
   private numbers: number[][] = [];
 
-  constructor(private filePath: string) {
+  constructor(private filePath: string, chunkSize: number = 25) {
+    this.CHUNK_SIZE = chunkSize;
+
     this.fd = fs.openSync(filePath, 'r');
     this.fileSize = fs.statSync(filePath).size;
     this.sharedBuffer = Buffer.alloc(this.CHUNK_SIZE);

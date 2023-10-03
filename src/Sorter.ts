@@ -98,6 +98,8 @@ class FileHandler implements IFileHandler {
   private readonly DIR_PATH: string = path.join(path.resolve(), 'data');
   private readonly TEMP_DIR_NAME: string = 'temp';
   private destFileNames: string[] = [];
+
+  private tempSrcFilePath: string = '';
   constructor(
     private srcFilePath: string,
     numOfSrc: number,
@@ -138,8 +140,9 @@ class FileHandler implements IFileHandler {
 
       const filePath = path.join(this.DIR_PATH, `sorted_file_${formatted}.txt`);
       fs.writeFileSync(filePath, '');
+
       this.srcRunHandlers.push(new RunsHandler(filePath));
-      return [runHandler];
+      return [new RunsHandler(this.tempSrcFilePath)];
     } else {
       return this.srcRunHandlers;
     }
@@ -176,6 +179,12 @@ class FileHandler implements IFileHandler {
       recursive: true,
       force: true,
     });
+
+    fs.rmSync(this.tempSrcFilePath);
+  }
+
+  public setTempSrcFilePath(path: string): void {
+    this.tempSrcFilePath = path;
   }
 }
 
@@ -206,7 +215,42 @@ export default class Sorter implements ISorter {
     }
   }
 
+  private sortRawChunk(chunk: string): string {
+    const data = chunk
+      .trim()
+      .replace(/\n/g, ' ')
+      .replace(/\s{2,}/g, ' ');
+    const values = data.split(' ');
+    const numbers = values.map((n) => +n);
+    numbers.sort((a, b) => a - b);
+    return numbers.join(' ') + '\n';
+  }
+
+  private async preprocessFile() {
+    const reader = new Reader(this.filePath, 1024 * 1024 * 10);
+
+    const tempPath = path.resolve(
+      this.filePath,
+      '..',
+      'temp_' + path.basename(this.filePath)
+    );
+    this.fileHandler!.setTempSrcFilePath(tempPath);
+
+    const writer = new Writer(tempPath);
+    await writer.resetFileContents();
+
+    while (reader.hasNumbers()) {
+      const chunk = await reader.getChunk();
+      const sorted = this.sortRawChunk(chunk);
+      await writer.write(sorted);
+    }
+
+    await writer.end();
+  }
+
   private async naturalSort(): Promise<void> {
+    await this.preprocessFile();
+
     let L = 0;
     let passes = 0;
 
