@@ -1,8 +1,8 @@
-import generateFile from './fileGeneration';
 import { Command } from 'commander';
 import { validateFilePath } from './fileValidation';
 import Sorter from './Sorter';
 import { SortingTechnique } from './types';
+import FileGenerator from './fileGeneration';
 
 const program = new Command();
 
@@ -28,8 +28,9 @@ const { file: filePath } = program.opts();
   console.log(`Elapsed: ${(end - start) / 1000}s`);
 })();
 
+// const generator = new FileGenerator();
 // (async () => {
 //   for (let i = 1024 * 1024 * 20; i < 1024 * 1024 * 100; i *= 2) {
-//     await generateFile(i);
+//     await generator.generateFile(i);
 //   }
 // })();
