@@ -1,5 +1,5 @@
 import Reader from './Reader';
-import { RunsHandler } from './Sorter';
+import RunsHandler from './RunsHandler';
 import Writer from './Writer';
 
 enum SortingTechnique {
