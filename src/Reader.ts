@@ -95,6 +95,8 @@ export default class Reader implements IReader {
       .forEach((line) => {
         this.numbers.push([]);
 
+        if (line.endsWith('-')) line = line.slice(0, line.length - 1);
+
         const numbers = line
           .replace(/\s+/g, ' ')
           .trim()

@@ -1,7 +1,7 @@
 import { Command } from 'commander';
 import { validateFilePath } from './utils/fileValidation';
 import Sorter from './Sorter';
-import { SortingTechnique } from './types';
+import { FileSize, SortingTechnique } from './types';
 import FileGenerator from './FileGenerator';
 
 const program = new Command();
@@ -23,18 +23,25 @@ program
   .action(async (filePath, { type }) => {
     await validateFilePath(program, filePath);
 
+    console.log('Sorting a file...');
+    console.log(filePath);
     const start = performance.now();
     const sorter = new Sorter(filePath, type);
     await sorter.sort();
     const end = performance.now();
-    console.log(filePath);
+    console.log('Finished!');
     console.log(`Elapsed: ${(end - start) / 1000}s`);
   });
 
 program
   .command('generateFile')
   .description('Generate a file of dummy numbers')
-  .argument('<fileSize>', 'Size of the file to be generated in bytes')
+  .argument('<fileSize>', 'Size of the file to be generated')
+  .option(
+    `-u, --units <${Object.values(FileSize).join(', ')}>`,
+    'units of measurement of the generated file size',
+    `${FileSize.Bytes}`
+  )
   .option(
     '-min, --minimumNumber <number>',
     'minimal number that will be generated inside of the file',
@@ -50,14 +57,27 @@ program
     'number of numbers that a single line will contain',
     '10'
   )
-  .action(async (fileSize, { minimumNumber, maximumNumber, numbersInLine }) => {
-    console.log(fileSize, minimumNumber, maximumNumber, numbersInLine);
-    const generator = new FileGenerator(
-      numbersInLine,
-      minimumNumber,
-      maximumNumber
-    );
-    await generator.generateFile(fileSize);
-  });
+  .action(
+    async (
+      fileSize,
+      { minimumNumber, maximumNumber, numbersInLine, units }
+    ) => {
+      const multipliers = {
+        [FileSize.Bytes]: 1,
+        [FileSize.KB]: 1024,
+        [FileSize.MB]: 1024 * 1024,
+        [FileSize.GB]: 1024 * 1024 * 1024,
+      };
+
+      const generator = new FileGenerator(
+        numbersInLine,
+        minimumNumber,
+        maximumNumber
+      );
+      console.log('Generating a file...');
+      await generator.generateFile(fileSize * multipliers[units as FileSize]);
+      console.log('Done!');
+    }
+  );
 
 program.parse(process.argv);

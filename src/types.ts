@@ -44,6 +44,13 @@ interface IWriter {
   end(): Promise<void>;
 }
 
+enum FileSize {
+  Bytes = 'Bytes',
+  KB = 'KB',
+  MB = 'MB',
+  GB = 'GB',
+}
+
 export {
   IReader,
   IWriter,
@@ -51,4 +58,5 @@ export {
   IRunsHandler,
   IFileHandler,
   ISorter,
+  FileSize,
 };
