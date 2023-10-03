@@ -1,30 +1,54 @@
-import readline from 'node:readline/promises';
+import { RunsHandler } from './Sorter';
 
-interface IRunBuilder {
-  addToRun(number: number): void;
-  isRunEmpty(): boolean;
-  getRun(): number[];
-  clearRun(): void;
+enum SortingTechnique {
+  NATURAL_MERGE = 'natural-merge',
 }
 
-interface IFileWriter {
-  moveToNextFile(): void;
-  writeLine(data: string): void;
-  closeAllFiles(): void;
-  getFilePaths(): string[];
-  addDestFile(filePath: string): number;
+interface ISorter {
+  sort(): Promise<void>;
 }
 
-interface IFileReader {
-  addReader(filePath: string): string;
-  getReader(id: string): readline.Interface | undefined;
-  removeReader(id: string): void;
-  isOpened(id: string): boolean;
-  getLine(id: string): Promise<string>;
+interface IRunsHandler {
+  getNumber(): Promise<number>;
+  copyRun(anotherHandler: RunsHandler): Promise<void>;
+  copyNumber(anotherHandler: RunsHandler): Promise<void>;
+  peakNext(): Promise<number | null>;
+  writeNL(): Promise<void>;
+  isEOF(): boolean;
+  isEOR(): Promise<boolean>;
+  reset(): Promise<void>;
+  resetFileContents(): Promise<void>;
+  updateRunNumber(): void;
 }
 
-interface INaturalMergeSort {
-  sort(filePath: string): Promise<void>;
+interface IFileHandler {
+  getSrcRunHandlers(passes?: number): RunsHandler[];
+  getDestRunHandlers(): RunsHandler[];
+  switchSrcAndDest(): Promise<void>;
+  moveToNextRun(): void;
+  resetFiles(dest?: boolean): Promise<void>;
 }
 
-export { IRunBuilder, IFileWriter, IFileReader, INaturalMergeSort };
+interface IReader {
+  hasNumbers(): boolean;
+  getNumber(): Promise<number>;
+  peakNext(): Promise<number>;
+  readData(): Promise<void>;
+  reset(): void;
+}
+
+interface IWriter {
+  write(data: string | number): Promise<void>;
+  writeNumber(number: number): Promise<void>;
+  reset(): Promise<void>;
+  end(): Promise<void>;
+}
+
+export {
+  IReader,
+  IWriter,
+  SortingTechnique,
+  IRunsHandler,
+  IFileHandler,
+  ISorter,
+};

@@ -1,9 +1,8 @@
 import generateFile from './fileGeneration';
 import { Command } from 'commander';
 import { validateFilePath } from './fileValidation';
-import NaturalMergeSort from './naturalMerge';
-import readInChunks from './readInChunks';
-import writeNumbers from './writeNumbers';
+import Sorter from './Sorter';
+import { SortingTechnique } from './types';
 
 const program = new Command();
 
@@ -21,14 +20,16 @@ const { file: filePath } = program.opts();
 (async () => {
   await validateFilePath(program, filePath);
 
-  // const sorter = new NaturalMergeSort(filePath);
-  // await sorter.sort();
-  // const start = performance.now();
-  // await readInChunks(filePath);
-  // const end = performance.now();
-  // const elapsed = end - start;
-  // console.log(`Elapsed time: ${elapsed}`);
-  await writeNumbers();
+  const start = performance.now();
+  const sorter = new Sorter(filePath, SortingTechnique.NATURAL_MERGE);
+  await sorter.sort();
+  const end = performance.now();
+  console.log(filePath);
+  console.log(`Elapsed: ${(end - start) / 1000}s`);
 })();
 
-// generateFile(1024 * 1024 * 500);
+// (async () => {
+//   for (let i = 1024 * 1024 * 20; i < 1024 * 1024 * 100; i *= 2) {
+//     await generateFile(i);
+//   }
+// })();
