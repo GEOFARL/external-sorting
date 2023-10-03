@@ -162,4 +162,8 @@ export default class Reader implements IReader {
       return [line];
     }
   }
+
+  public getFileSize() {
+    return this.fileSize;
+  }
 }

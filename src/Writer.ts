@@ -44,4 +44,10 @@ export default class Writer implements IWriter {
       });
     });
   }
+
+  public resetFileContents(): Promise<void> {
+    return new Promise<void>((resolve) => {
+      fs.writeFile(this.filePath, '', () => resolve());
+    });
+  }
 }

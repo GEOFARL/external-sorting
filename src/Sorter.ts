@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import Reader from './Reader';
 import Writer from './Writer';
 import { IFileHandler, IRunsHandler, ISorter, SortingTechnique } from './types';
+import FileGenerator from './FileGenerator';
 
 export class RunsHandler implements IRunsHandler {
   private reader: Reader;
@@ -76,9 +77,14 @@ export class RunsHandler implements IRunsHandler {
   }
 
   public async resetFileContents(): Promise<void> {
-    return new Promise<void>((resolve) => {
-      fs.writeFile(this.filePath, '', () => resolve());
-    });
+    return this.writer.resetFileContents();
+  }
+
+  public getReader() {
+    return this.reader;
+  }
+  public getWriter() {
+    return this.writer;
   }
 }
 
@@ -126,7 +132,11 @@ class FileHandler implements IFileHandler {
   public getSrcRunHandlers(passes?: number): RunsHandler[] {
     if (passes === 0) {
       const runHandler = this.srcRunHandlers.pop()!;
-      const filePath = path.join(this.DIR_PATH, 'sorted.txt');
+
+      const fileSize = runHandler.getReader().getFileSize();
+      const formatted = FileGenerator.formatBytes(fileSize);
+
+      const filePath = path.join(this.DIR_PATH, `sorted_file_${formatted}.txt`);
       fs.writeFileSync(filePath, '');
       this.srcRunHandlers.push(new RunsHandler(filePath));
       return [runHandler];
@@ -159,6 +169,13 @@ class FileHandler implements IFileHandler {
     } else {
       await Promise.all(this.srcRunHandlers.map((h) => h.resetFileContents()));
     }
+  }
+
+  public cleanUp(): void {
+    fs.rmSync(path.join(this.DIR_PATH, this.TEMP_DIR_NAME), {
+      recursive: true,
+      force: true,
+    });
   }
 }
 
@@ -266,5 +283,7 @@ export default class Sorter implements ISorter {
       passes += 1;
       await this.fileHandler!.switchSrcAndDest();
     } while (L > 1);
+
+    setTimeout(() => this.fileHandler!.cleanUp(), 0);
   }
 }

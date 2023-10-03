@@ -1,4 +1,6 @@
+import Reader from './Reader';
 import { RunsHandler } from './Sorter';
+import Writer from './Writer';
 
 enum SortingTechnique {
   NATURAL_MERGE = 'natural-merge',
@@ -19,6 +21,8 @@ interface IRunsHandler {
   reset(): Promise<void>;
   resetFileContents(): Promise<void>;
   updateRunNumber(): void;
+  getReader(): Reader;
+  getWriter(): Writer;
 }
 
 interface IFileHandler {
@@ -27,6 +31,7 @@ interface IFileHandler {
   switchSrcAndDest(): Promise<void>;
   moveToNextRun(): void;
   resetFiles(dest?: boolean): Promise<void>;
+  cleanUp(): void;
 }
 
 interface IReader {
@@ -35,11 +40,13 @@ interface IReader {
   peakNext(): Promise<number>;
   readData(): Promise<void>;
   reset(): void;
+  getFileSize(): number;
 }
 
 interface IWriter {
   write(data: string | number): Promise<void>;
   writeNumber(number: number): Promise<void>;
+  resetFileContents(): Promise<void>;
   reset(): Promise<void>;
   end(): Promise<void>;
 }

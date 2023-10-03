@@ -15,7 +15,7 @@ export default class FileGenerator {
   }
 
   public async generateFile(byteSize: number = 1024 * 1024) {
-    const GENERATED_FILENAME = `generated_file_${this.formatBytes(
+    const GENERATED_FILENAME = `generated_file_${FileGenerator.formatBytes(
       byteSize,
       2
     )}.txt`;
@@ -25,7 +25,7 @@ export default class FileGenerator {
     );
 
     let bytesWritten = 0;
-
+    await writer.resetFileContents();
     do {
       const data = [...Array(this.NUMBERS_IN_LINE)].map(() => {
         return this.getRandInt();
@@ -55,7 +55,7 @@ export default class FileGenerator {
     );
   }
 
-  private formatBytes(bytes: number, decimals = 2) {
+  public static formatBytes(bytes: number, decimals = 2) {
     if (!+bytes) return '0 Bytes';
 
     const k = 1024;
