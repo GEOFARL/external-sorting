@@ -80,7 +80,12 @@ export default class RunsHandler implements IRunsHandler {
   public getReader() {
     return this.reader;
   }
+
   public getWriter() {
     return this.writer;
+  }
+
+  public getFilePath(): string {
+    return this.filePath;
   }
 }

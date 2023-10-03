@@ -144,10 +144,12 @@ export default class Reader implements IReader {
   public reset(): void {
     this.eof = false;
     fs.closeSync(this.fd);
-    this.fd = fs.openSync(this.filePath, 'r');
+    if (fs.existsSync(this.filePath)) {
+      this.fd = fs.openSync(this.filePath, 'r');
+      this.fileSize = fs.statSync(this.filePath).size;
+    }
     this.pos = 0;
     this.sharedBuffer = Buffer.alloc(this.CHUNK_SIZE);
-    this.fileSize = fs.statSync(this.filePath).size;
     this.leftOvers = '';
     this.numbers = [];
   }

@@ -4,6 +4,11 @@ import RunsHandler from './RunsHandler';
 import { IFileHandler } from './types';
 import FileGenerator from './FileGenerator';
 
+type ConstructorOptions = {
+  addSrcRunHandler?: boolean;
+  initSrcRunHandlers?: boolean;
+};
+
 export default class FileHandler implements IFileHandler {
   private numberOfSourceFiles: number;
   private numberOfDestFiles: number;
@@ -14,29 +19,50 @@ export default class FileHandler implements IFileHandler {
   private readonly DIR_PATH: string = path.join(path.resolve(), 'data');
   private readonly TEMP_DIR_NAME: string = 'temp';
   private destFileNames: string[] = [];
+  private srcFileNames: string[] = [];
+
+  private options: ConstructorOptions;
 
   private tempSrcFilePath: string = '';
   constructor(
     private srcFilePath: string,
     numOfSrc: number,
-    numOfDest: number
+    numOfDest: number,
+    options?: ConstructorOptions
   ) {
     this.numberOfSourceFiles = numOfSrc;
     this.numberOfDestFiles = numOfDest;
+
+    this.options = Object.assign(
+      { addSrcRunHandler: true, initSrcRunHandlers: false },
+      options
+    );
 
     this.initRuns();
   }
 
   private initRuns(): void {
-    this.srcRunHandlers.push(new RunsHandler(this.srcFilePath));
+    if (this.options.addSrcRunHandler) {
+      this.srcRunHandlers.push(new RunsHandler(this.srcFilePath));
+    }
 
     this.initTempDir();
-    for (let i = 0; i < this.numberOfDestFiles; i += 1) {
+    const numberOfFiles =
+      this.numberOfDestFiles +
+      (this.options.initSrcRunHandlers ? this.numberOfSourceFiles : 0);
+
+    for (let i = 0; i < numberOfFiles; i++) {
       const fileName = `file${i}.txt`;
       const filePath = path.join(this.DIR_PATH, this.TEMP_DIR_NAME, fileName);
       fs.writeFileSync(filePath, '');
-      this.destFileNames.push(fileName);
-      this.destRunHandlers.push(new RunsHandler(filePath));
+
+      if (i < this.numberOfDestFiles) {
+        this.destFileNames.push(fileName);
+        this.destRunHandlers.push(new RunsHandler(filePath));
+      } else {
+        this.srcFileNames.push(fileName);
+        this.srcRunHandlers.push(new RunsHandler(filePath));
+      }
     }
   }
 
@@ -96,10 +122,32 @@ export default class FileHandler implements IFileHandler {
       force: true,
     });
 
-    fs.rmSync(this.tempSrcFilePath);
+    if (fs.existsSync(this.tempSrcFilePath)) {
+      fs.rmSync(this.tempSrcFilePath);
+    }
   }
 
   public setTempSrcFilePath(path: string): void {
     this.tempSrcFilePath = path;
+  }
+
+  public getTempSrcFilePath(): string {
+    return this.tempSrcFilePath;
+  }
+
+  async moveResultFile(filePath: string): Promise<void> {
+    const runHandler = new RunsHandler(this.srcFilePath);
+    const fileSize = runHandler.getReader().getFileSize();
+    const formatted = FileGenerator.formatBytes(fileSize);
+
+    // Extract the file name from the source file path
+    const fileName = `sorted_file_${formatted}.txt`;
+
+    // Create the destination file path by combining the destination directory and file name
+    const destinationFilePath = path.join(this.DIR_PATH, fileName);
+    fs.writeFileSync(destinationFilePath, ''); // Replace with the destination directory
+
+    // Rename and move the file
+    await fs.promises.rename(filePath, destinationFilePath);
   }
 }

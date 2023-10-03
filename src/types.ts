@@ -4,6 +4,7 @@ import Writer from './Writer';
 
 enum SortingTechnique {
   NATURAL_MERGE = 'natural-merge',
+  MULTI_WAY_MERGE = 'multi-way-merge',
 }
 
 interface ISorter {
@@ -23,6 +24,7 @@ interface IRunsHandler {
   updateRunNumber(): void;
   getReader(): Reader;
   getWriter(): Writer;
+  getFilePath(): string;
 }
 
 interface IFileHandler {
@@ -32,6 +34,9 @@ interface IFileHandler {
   moveToNextRun(): void;
   resetFiles(dest?: boolean): Promise<void>;
   cleanUp(): void;
+  moveResultFile(filePath: string): Promise<void>;
+  setTempSrcFilePath(filePath: string): void;
+  getTempSrcFilePath(): string;
 }
 
 interface IReader {
