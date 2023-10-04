@@ -11,7 +11,8 @@ export default class Sorter implements ISorter {
 
   constructor(
     private filePath: string,
-    private sortingTechnique: SortingTechnique
+    private sortingTechnique: SortingTechnique,
+    private isPresorted: boolean
   ) {
     switch (sortingTechnique) {
       case SortingTechnique.NATURAL_MERGE: {
@@ -69,7 +70,7 @@ export default class Sorter implements ISorter {
   }
 
   private async preprocessFile() {
-    const reader = new Reader(this.filePath, 1024 * 1024 * 100);
+    const reader = new Reader(this.filePath, 1024 * 1024 * 150);
 
     const tempPath = path.resolve(
       this.filePath,
@@ -91,14 +92,19 @@ export default class Sorter implements ISorter {
   }
 
   private async naturalSort(): Promise<void> {
-    await this.preprocessFile();
+    if (this.isPresorted) {
+      await this.preprocessFile();
+    }
 
     let L = 0;
     let passes = 0;
 
     do {
       L = 0;
-      const [src] = this.fileHandler!.getSrcRunHandlers(passes);
+      const [src] = this.fileHandler!.getSrcRunHandlers(
+        passes,
+        this.isPresorted
+      );
       let [first, second] = this.fileHandler!.getDestRunHandlers();
 
       // Remove file contents of the destination
@@ -174,11 +180,18 @@ export default class Sorter implements ISorter {
   }
 
   private async multiWayMergeSort(): Promise<void> {
-    await this.preprocessFile();
+    if (this.isPresorted) {
+      await this.preprocessFile();
+    }
 
     let j = 0;
     let L = 0;
-    const srcReader = new RunsHandler(this.fileHandler!.getTempSrcFilePath());
+    let srcReader: RunsHandler;
+    if (this.isPresorted) {
+      srcReader = new RunsHandler(this.fileHandler!.getTempSrcFilePath());
+    } else {
+      srcReader = new RunsHandler(this.filePath);
+    }
     const destRunHandlers = this.fileHandler!.getDestRunHandlers();
 
     // Distribute initial runs

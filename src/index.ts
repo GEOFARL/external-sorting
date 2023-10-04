@@ -20,13 +20,18 @@ program
     'type of the sorting algorithm',
     `${SortingTechnique.NATURAL_MERGE}`
   )
-  .action(async (filePath, { type }) => {
+  .option(
+    `-ps, --presort <boolean>`,
+    'whether to presort file before applying chosen algorithm',
+    'true'
+  )
+  .action(async (filePath, { type, presort }) => {
     await validateFilePath(program, filePath);
 
     console.log('Sorting a file...');
     console.log(filePath);
     const start = performance.now();
-    const sorter = new Sorter(filePath, type);
+    const sorter = new Sorter(filePath, type, presort === 'true');
     await sorter.sort();
     const end = performance.now();
     console.log('Finished!');

@@ -73,7 +73,10 @@ export default class FileHandler implements IFileHandler {
     }
   }
 
-  public getSrcRunHandlers(passes?: number): RunsHandler[] {
+  public getSrcRunHandlers(
+    passes?: number,
+    presorted?: boolean
+  ): RunsHandler[] {
     if (passes === 0) {
       const runHandler = this.srcRunHandlers.pop()!;
 
@@ -84,7 +87,11 @@ export default class FileHandler implements IFileHandler {
       fs.writeFileSync(filePath, '');
 
       this.srcRunHandlers.push(new RunsHandler(filePath));
-      return [new RunsHandler(this.tempSrcFilePath)];
+      if (presorted) {
+        return [new RunsHandler(this.tempSrcFilePath)];
+      } else {
+        return [runHandler];
+      }
     } else {
       return this.srcRunHandlers;
     }
