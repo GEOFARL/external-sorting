@@ -154,7 +154,7 @@ export default class Reader implements IReader {
     this.numbers = [];
   }
 
-  private static splitOnLastSpace(line: string): string[] {
+  public static splitOnLastSpace(line: string): string[] {
     const lastSpaceIndex = line.lastIndexOf(' ');
 
     if (lastSpaceIndex !== -1) {
