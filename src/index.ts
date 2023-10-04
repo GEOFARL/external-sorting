@@ -6,10 +6,7 @@ import FileGenerator from './FileGenerator';
 
 const program = new Command();
 
-program
-  .name('Polyphase merge sort')
-  .description('CLI to sort huge files')
-  .version('0.1.0');
+program.name('Sorter').description('CLI to sort huge files').version('0.1.0');
 
 program
   .command('sort')
