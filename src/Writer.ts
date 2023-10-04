@@ -23,7 +23,6 @@ export default class Writer implements IWriter {
   }
 
   public async writeNumber(number: number): Promise<void> {
-    if (number === undefined) throw 'Undefined';
     await this.write(number + ' ');
   }
 
