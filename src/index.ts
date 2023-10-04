@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { validateFilePath } from './utils/fileValidation';
+import { errorColor, validateFilePath } from './utils/fileValidation';
 import Sorter from './Sorter';
 import { FileSize, SortingTechnique } from './types';
 import FileGenerator from './FileGenerator';
@@ -21,9 +21,8 @@ program
     `${SortingTechnique.NATURAL_MERGE}`
   )
   .option(
-    `-ps, --presort <boolean>`,
-    'whether to presort file before applying chosen algorithm',
-    'true'
+    `-ps, --presort`,
+    'whether to presort file before applying chosen algorithm'
   )
   .action(async (filePath, { type, presort }) => {
     await validateFilePath(program, filePath);
@@ -31,8 +30,14 @@ program
     console.log('Sorting a file...');
     console.log(filePath);
     const start = performance.now();
-    const sorter = new Sorter(filePath, type, presort === 'true');
-    await sorter.sort();
+    const sorter = new Sorter(filePath, type, presort);
+    try {
+      await sorter.sort();
+    } catch (err) {
+      if (err instanceof Error) {
+        program.error(errorColor(err.message));
+      }
+    }
     const end = performance.now();
     console.log('Finished!');
     console.log(`Elapsed: ${(end - start) / 1000}s`);

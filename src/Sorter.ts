@@ -47,12 +47,22 @@ export default class Sorter implements ISorter {
   public async sort(): Promise<void> {
     switch (this.sortingTechnique) {
       case SortingTechnique.NATURAL_MERGE: {
-        await this.naturalSort();
+        try {
+          await this.naturalSort();
+        } catch (err) {
+          this.fileHandler?.cleanUp();
+          throw err;
+        }
         break;
       }
 
       case SortingTechnique.MULTI_WAY_MERGE: {
-        await this.multiWayMergeSort();
+        try {
+          await this.multiWayMergeSort();
+        } catch (err) {
+          this.fileHandler?.cleanUp();
+          throw err;
+        }
         break;
       }
     }

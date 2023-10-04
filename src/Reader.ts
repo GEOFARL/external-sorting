@@ -31,7 +31,7 @@ export default class Reader implements IReader {
       !this.isEOF() ||
       (this.numbers.length > 0 &&
         this.numbers[0].length > 0 &&
-        this.numbers[0][0] !== 0)
+        (this.numbers[0][0] !== 0 || this.numbers[0].length > 1))
     );
   }
 
@@ -103,8 +103,12 @@ export default class Reader implements IReader {
           .replace(/\s+/g, ' ')
           .trim()
           .split(' ')
-          .map((value) => +value);
-
+          .map((value) => {
+            if (isNaN(+value)) {
+              throw new Error('File contains data that is not a number');
+            }
+            return +value;
+          });
         this.numbers[this.numbers.length - 1].push(...numbers);
       });
   }

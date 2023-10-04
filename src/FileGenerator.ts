@@ -1,5 +1,6 @@
 import * as path from 'path';
 import Writer from './Writer';
+import fs from 'fs';
 
 export default class FileGenerator {
   private readonly SEPARATOR: string = ' ';
@@ -20,6 +21,9 @@ export default class FileGenerator {
       2
     )}.txt`;
 
+    if (!fs.existsSync(path.join(path.resolve(), 'data'))) {
+      fs.mkdirSync(path.join(path.resolve(), 'data'));
+    }
     const writer = new Writer(
       path.join(path.resolve(), 'data', GENERATED_FILENAME)
     );

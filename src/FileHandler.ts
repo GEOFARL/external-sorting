@@ -69,7 +69,7 @@ export default class FileHandler implements IFileHandler {
   private initTempDir(): void {
     const directoryPath = path.join(this.DIR_PATH, this.TEMP_DIR_NAME);
     if (!fs.existsSync(directoryPath)) {
-      fs.mkdirSync(directoryPath);
+      fs.mkdirSync(directoryPath, { recursive: true });
     }
   }
 
