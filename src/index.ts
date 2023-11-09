@@ -24,6 +24,16 @@ program
   .action(async (filePath, { type, presort }) => {
     await validateFilePath(program, filePath);
 
+    if (!Object.values(SortingTechnique).includes(type)) {
+      program.error(
+        errorColor(
+          `Incorrectly chosen type of sorting algorithm\nChoose one of these: ${Object.values(
+            SortingTechnique
+          ).join(', ')}`
+        )
+      );
+    }
+
     console.log('Sorting a file...');
     console.log(filePath);
     const start = performance.now();
@@ -33,6 +43,8 @@ program
     } catch (err) {
       if (err instanceof Error) {
         program.error(errorColor(err.message));
+      } else {
+        throw err;
       }
     }
     const end = performance.now();
